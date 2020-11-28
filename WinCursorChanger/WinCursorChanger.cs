@@ -96,20 +96,7 @@ namespace WinCursorChanger
         {
             Cursors[] cursorsToReplace = { Cursors.IBeam, Cursors.Arrow, Cursors.Hand };
 
-            foreach (var cursor in cursorsToReplace)
-            {
-                try
-                {
-                    this._setCursors(cursor);
-
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception();
-                }
-            }
-
-            return true;
+            return this._setCursors(cursorsToReplace);
         }
 
         ///// <summary>
@@ -118,9 +105,9 @@ namespace WinCursorChanger
         ///// <returns>Boolean: True if successful, false otherwise.</returns>
         public bool replaceLinkSelectCursor()
         {
-            Cursors cursor = Cursors.Hand;
+            Cursors[] cursorsToReplace = { Cursors.Hand };
 
-            return this._setCursors(cursor);
+            return this._setCursors(cursorsToReplace);
         }
 
         /// <summary>
@@ -136,19 +123,7 @@ namespace WinCursorChanger
             Cursors[] cursorsToReplace = new Cursors[tmp.Length];
             tmp.CopyTo(cursorsToReplace, 0);
 
-            foreach (var cursor in cursorsToReplace)
-            {
-                try
-                {
-                    this._setCursors(cursor);
-
-                } catch(Exception ex)
-                {
-                    throw new Exception();
-                }
-            }
-
-            return true;
+            return this._setCursors(cursorsToReplace);
 
         }
 
@@ -172,10 +147,10 @@ namespace WinCursorChanger
             throw new NotImplementedException();
         }
 
-        private bool _setCursors(Cursors cursor)
+        private bool _setCursors(Cursors[] cursorsToReplace)
         {
-            bool registry = this._updateRegistry(cursor);
-            bool system = this._updateSystemCursorWithoutRestart(cursor);
+            bool registry = this._updateRegistry(cursorsToReplace);
+            bool system = this._updateSystemCursorWithoutRestart(cursorsToReplace);
 
             return (registry && system) ? true : false;
         }
@@ -185,13 +160,17 @@ namespace WinCursorChanger
         /// </summary>
         /// <param name="cursorsToReplace">List of cursorsToReplace</param>
         /// <returns>Bool: True - Updated Successfully, False - Otherwise</returns>
-        private bool _updateRegistry(Cursors cursor)
+        private bool _updateRegistry(Cursors[] cursorsToReplace)
         {
             try
             {
                 using (var cursorRegistryKey = Registry.CurrentUser.OpenSubKey(this._cursorSubKey, true))
                 {
-                    cursorRegistryKey.SetValue(cursor.ToString(), this._newCursorFilePath);
+
+                    foreach(var cursor in cursorsToReplace)
+                    {
+                        cursorRegistryKey.SetValue(cursor.ToString(), this._newCursorFilePath);
+                    }                    
                 }
             } catch (Exception ex)
             {
@@ -223,15 +202,14 @@ namespace WinCursorChanger
             return true;
         }
 
-        private bool _updateSystemCursorWithoutRestart(Cursors cursor)
+        private bool _updateSystemCursorWithoutRestart(Cursors[] cursorsToReplace)
         {
 
-            try
+            foreach(var cursor in cursorsToReplace)
             {
-                IntPtr newCursorFilePtr = LoadCursorFromFile(this._newCursorFilePath);
-
                 try
                 {
+                    IntPtr newCursorFilePtr = LoadCursorFromFile(this._newCursorFilePath);
                     SetSystemCursor(newCursorFilePtr, (uint)cursor.GetHashCode());
                 }
                 catch (Exception ex)
@@ -239,12 +217,6 @@ namespace WinCursorChanger
                     Console.WriteLine($"There was an error updating cursor ({cursor}). Error: {ex}");
                     return false;
                 }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"There was an error loading the cursorFile. Error: {ex}");
-                return false;
             }
 
             return true;
