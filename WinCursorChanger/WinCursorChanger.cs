@@ -94,18 +94,33 @@ namespace WinCursorChanger
         /// <returns>Boolean: True if successful, false otherwise.</returns>
         public bool replaceCommonCursors()
         {
-            Cursors[] cursorsToReplace = { Cursors.Arrow, Cursors.Hand, Cursors.IBeam };
-            return this._setCursors(cursorsToReplace);
+            Cursors[] cursorsToReplace = { Cursors.IBeam, Cursors.Arrow, Cursors.Hand };
+
+            foreach (var cursor in cursorsToReplace)
+            {
+                try
+                {
+                    this._setCursors(cursor);
+
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception();
+                }
+            }
+
+            return true;
         }
 
-        /// <summary>
-        /// Replaces the link select cursor (hand) with the new cursor.
-        /// </summary>
-        /// <returns>Boolean: True if successful, false otherwise.</returns>
+        ///// <summary>
+        ///// Replaces the link select cursor (hand) with the new cursor.
+        ///// </summary>
+        ///// <returns>Boolean: True if successful, false otherwise.</returns>
         public bool replaceLinkSelectCursor()
         {
-            Cursors[] cursorToReplace = { Cursors.Hand };
-            return this._setCursors(cursorToReplace);
+            Cursors cursor = Cursors.Hand;
+
+            return this._setCursors(cursor);
         }
 
         /// <summary>
@@ -121,7 +136,19 @@ namespace WinCursorChanger
             Cursors[] cursorsToReplace = new Cursors[tmp.Length];
             tmp.CopyTo(cursorsToReplace, 0);
 
-            return this._setCursors(cursorsToReplace);
+            foreach (var cursor in cursorsToReplace)
+            {
+                try
+                {
+                    this._setCursors(cursor);
+
+                } catch(Exception ex)
+                {
+                    throw new Exception();
+                }
+            }
+
+            return true;
 
         }
 
@@ -145,17 +172,12 @@ namespace WinCursorChanger
             throw new NotImplementedException();
         }
 
-        private bool _setCursors(Cursors[] cursorsToReplace)
+        private bool _setCursors(Cursors cursor)
         {
-            bool registry = this._updateRegistry(cursorsToReplace);
-            bool system = this._updateSystemCursorWithoutRestart(cursorsToReplace);
+            bool registry = this._updateRegistry(cursor);
+            bool system = this._updateSystemCursorWithoutRestart(cursor);
 
-            if (registry && system)
-            {
-                return true;
-            }
-
-            return false;
+            return (registry && system) ? true : false;
         }
 
         /// <summary>
@@ -163,16 +185,13 @@ namespace WinCursorChanger
         /// </summary>
         /// <param name="cursorsToReplace">List of cursorsToReplace</param>
         /// <returns>Bool: True - Updated Successfully, False - Otherwise</returns>
-        private bool _updateRegistry(Cursors[] cursorsToReplace)
+        private bool _updateRegistry(Cursors cursor)
         {
             try
             {
                 using (var cursorRegistryKey = Registry.CurrentUser.OpenSubKey(this._cursorSubKey, true))
                 {
-                    foreach (var cursor in cursorsToReplace)
-                    {
-                        cursorRegistryKey.SetValue(cursor.ToString(), this._newCursorFilePath);
-                    }
+                    cursorRegistryKey.SetValue(cursor.ToString(), this._newCursorFilePath);
                 }
             } catch (Exception ex)
             {
@@ -204,25 +223,23 @@ namespace WinCursorChanger
             return true;
         }
 
-        private bool _updateSystemCursorWithoutRestart(Cursors[] cursorsToReplace)
+        private bool _updateSystemCursorWithoutRestart(Cursors cursor)
         {
 
             try
             {
                 IntPtr newCursorFilePtr = LoadCursorFromFile(this._newCursorFilePath);
 
-                foreach (var cursor in cursorsToReplace)
+                try
                 {
-                    try
-                    {
-                        SetSystemCursor(newCursorFilePtr, (uint)cursor.GetHashCode());
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"There was an error updating cursor ({cursor}). Error: {ex}");
-                        return false;
-                    }
+                    SetSystemCursor(newCursorFilePtr, (uint)cursor.GetHashCode());
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"There was an error updating cursor ({cursor}). Error: {ex}");
+                    return false;
+                }
+
             }
             catch (Exception ex)
             {
