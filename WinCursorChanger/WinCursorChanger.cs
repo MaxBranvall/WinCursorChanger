@@ -46,7 +46,7 @@ namespace WinCursorChanger
         /// <summary>
         /// Stores the id of system cursors.
         /// </summary>
-        private enum Cursors
+        public enum Cursors
         {
             AppStarting = 32650,
             Arrow = 32512,
@@ -73,7 +73,7 @@ namespace WinCursorChanger
             this._newCursorFilePath = null;
             this._cursorSubKey = @"Control Panel\Cursors";
             this._rootCursorDirectoryPath = _getCursorDirectoryPath();
-            this._defaultCursorSettingsPath = _getDefaultCursorSettingsPath();           
+            this._defaultCursorSettingsPath = _getDefaultCursorSettingsPath();            
         }
 
         /// <summary>
@@ -125,6 +125,17 @@ namespace WinCursorChanger
 
             return this._setCursors(cursorsToReplace);
 
+        }
+
+        /// <summary>
+        /// Replaces all cursors specified in array with
+        /// the new cursor file specified in the constructor.
+        /// </summary>
+        /// <param name="cursorsToReplace">Array of Cursors to be replaced.</param>
+        /// <returns>Boolean: True if successful, false otherwise.</returns>
+        public bool replaceAnyCursors(Cursors[] cursorsToReplace)
+        {
+            return this._setCursors(cursorsToReplace);
         }
 
         /// <summary>
@@ -202,9 +213,14 @@ namespace WinCursorChanger
             return true;
         }
 
+        /// <summary>
+        /// Uses interops to update the cursor immediately. This allows the cursor
+        /// changes to be seen without restarting or logging out of the system first.
+        /// </summary>
+        /// <param name="cursorsToReplace">Array of cursors to replace.</param>
+        /// <returns>Boolean: True if successful, false otherwise.</returns>
         private bool _updateSystemCursorWithoutRestart(Cursors[] cursorsToReplace)
         {
-
             foreach(var cursor in cursorsToReplace)
             {
                 try
@@ -276,7 +292,7 @@ namespace WinCursorChanger
 
                     foreach (var name in names)
                     {
-
+                        // Only save cursors whose values are not of type 'DWORD', not empty, and not in keys to ignore.
                         if (!(name == "DWORD" || String.IsNullOrEmpty(name) || this._keysToIgnore.Contains(name)))
                         {
                             var path = cursorRegistryKey.GetValue(name);
