@@ -8,9 +8,8 @@ namespace WinCursorChangerConsole
     {
         static void Main(string[] args)
         {
-            CursorChanger cursorChanger = new CursorChanger(Path.Combine(Environment.GetEnvironmentVariable("systemroot"), "Cursors", "_middleFinger.cur"));
-            cursorChanger.replaceLinkSelectCursor();
-            //cursorChanger.replaceAnyCursors(new CursorChanger.Cursors[] { CursorChanger.Cursors.IBeam, CursorChanger.Cursors.Arrow });
+            CursorChanger cursorChanger = new CursorChanger();
+            cursorChanger.restoreAllDefaultCursors();
         }
     }
 }

@@ -44,6 +44,12 @@ namespace WinCursorChanger
         private string _defaultCursorSettingsPath { get; init; }
 
         /// <summary>
+        /// Determines whether or not a force reset of the default cursor
+        /// settings file is required.
+        /// </summary>
+        private bool _forceReset { get; init; } = false;
+
+        /// <summary>
         /// Stores the id of system cursors.
         /// </summary>
         public enum Cursors
@@ -73,7 +79,7 @@ namespace WinCursorChanger
             this._newCursorFilePath = null;
             this._cursorSubKey = @"Control Panel\Cursors";
             this._rootCursorDirectoryPath = _getCursorDirectoryPath();
-            this._defaultCursorSettingsPath = _getDefaultCursorSettingsPath();            
+            this._defaultCursorSettingsPath = _getDefaultCursorSettingsPath();
         }
 
         /// <summary>
@@ -85,7 +91,21 @@ namespace WinCursorChanger
             this._newCursorFilePath = newCursorFilePath;
             this._cursorSubKey = @"Control Panel\Cursors";
             this._rootCursorDirectoryPath = _getCursorDirectoryPath();
-            this._defaultCursorSettingsPath = _getDefaultCursorSettingsPath();        
+            this._defaultCursorSettingsPath = _getDefaultCursorSettingsPath();
+        }
+
+        /// <summary>
+        /// Takes in the new cursor's file path, as well as a force reset bool.
+        /// </summary>
+        /// <param name="newCursorFilePath">File path to the cursor that will replace selected system cursors.</param>
+        /// <param name="forceReset">True will force a reset to the defaultCursors file. False is the default behavior.</param>
+        public CursorChanger(string newCursorFilePath, bool forceReset)
+        {
+            this._forceReset = forceReset;
+            this._newCursorFilePath = newCursorFilePath;
+            this._cursorSubKey = @"Control Panel\Cursors";
+            this._rootCursorDirectoryPath = _getCursorDirectoryPath();
+            this._defaultCursorSettingsPath = _getDefaultCursorSettingsPath();
         }
 
         /// <summary>
@@ -99,10 +119,10 @@ namespace WinCursorChanger
             return this._setCursors(cursorsToReplace);
         }
 
-        ///// <summary>
-        ///// Replaces the link select cursor (hand) with the new cursor.
-        ///// </summary>
-        ///// <returns>Boolean: True if successful, false otherwise.</returns>
+        /// <summary>
+        /// Replaces the link select cursor (hand) with the new cursor.
+        /// </summary>
+        /// <returns>Boolean: True if successful, false otherwise.</returns>
         public bool replaceLinkSelectCursor()
         {
             Cursors[] cursorsToReplace = { Cursors.Hand };
@@ -139,29 +159,53 @@ namespace WinCursorChanger
         }
 
         /// <summary>
-        /// Not implemented yet. Will restore cursors to default.
+        /// Restores default cursors from backup file made
+        /// on first startup.
         /// </summary>
-        /// <returns></returns>
-        public bool resetDefaultCursors()
+        /// <returns>Bool: True if successful, false otherwise.</returns>
+        public bool restoreAllDefaultCursors()
         {
-            throw new NotImplementedException();
+
+            CursorEntryList jsonOutput;
+
+            // Deserialsize settings file into object
+
+            try
+            {
+                jsonOutput = JsonConvert.DeserializeObject<CursorEntryList>(File.ReadAllText(this._defaultCursorSettingsPath));
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while deserializing the settings file: {ex}");
+                return false;
+            }
+
+            return this._setCursors(jsonOutput.defaultCursorEntries);
         }
 
-        private bool _defaultCursors()
-        {
-            // Cursors.AppStarting = wait_r.cur
-            // Cursors.Normal = arrow_r.cur
-            // Cursors.Cross = cross_r.cur
-            // Cursors.Hand = aero_link.cur
-            // Cursors.Help = help_r.cur
-            // Cursors.IBeam = //not yet
-            throw new NotImplementedException();
-        }
-
+        /// <summary>
+        /// Provides abstraction to public methods. Calls the private methods
+        /// to update the registry and perform interops.
+        /// </summary>
+        /// <param name="cursorsToReplace">Array of cursors to replace.</param>
+        /// <returns>Boolean: true if successful, false otherwise</returns>
         private bool _setCursors(Cursors[] cursorsToReplace)
         {
             bool registry = this._updateRegistry(cursorsToReplace);
-            bool system = this._updateSystemCursorWithoutRestart(cursorsToReplace);
+            bool system = this._updateSystemCursorsWithoutRestart(cursorsToReplace);
+
+            return (registry && system) ? true : false;
+        }
+
+        /// <summary>
+        /// Provides abstraction to public methods. Calls the private methods
+        /// to update the registry and perform interops.
+        /// </summary>
+        /// <param name="cursorsToReplace">List of cursors to replace.</param>
+        /// <returns>Boolean: true if successful, false otherwise</returns>
+        private bool _setCursors(List<DefaultCursorEntry> cursorsToReplace)
+        {
+            bool registry = this._updateRegistry(cursorsToReplace);
+            bool system = this._updateSystemCursorsWithoutRestart(cursorsToReplace);
 
             return (registry && system) ? true : false;
         }
@@ -169,7 +213,7 @@ namespace WinCursorChanger
         /// <summary>
         /// Updates the registry of all specified cursors.
         /// </summary>
-        /// <param name="cursorsToReplace">List of cursorsToReplace</param>
+        /// <param name="cursorsToReplace">Array of cursors to replace.</param>
         /// <returns>Bool: True - Updated Successfully, False - Otherwise</returns>
         private bool _updateRegistry(Cursors[] cursorsToReplace)
         {
@@ -191,8 +235,12 @@ namespace WinCursorChanger
 
             return true;
         }
-
-        private bool _resetRegistry(Cursors[] cursorsToReplace)
+        /// <summary>
+        /// Used to reset default cursors. Overloaded method.
+        /// </summary>
+        /// <param name="cursorsToReplace">List of cursors to replace.</param>
+        /// <returns>Bool: True - Updated Successfully, False - Otherwise</returns>
+        private bool _updateRegistry(List<DefaultCursorEntry> cursorsToReplace)
         {
             try
             {
@@ -200,7 +248,7 @@ namespace WinCursorChanger
                 {
                     foreach (var cursor in cursorsToReplace)
                     {
-                        cursorRegistryKey.SetValue(cursor.ToString(), cursor.GetHashCode());
+                        cursorRegistryKey.SetValue(cursor.Name, cursor.Path);
                     }
                 }
             }
@@ -219,7 +267,7 @@ namespace WinCursorChanger
         /// </summary>
         /// <param name="cursorsToReplace">Array of cursors to replace.</param>
         /// <returns>Boolean: True if successful, false otherwise.</returns>
-        private bool _updateSystemCursorWithoutRestart(Cursors[] cursorsToReplace)
+        private bool _updateSystemCursorsWithoutRestart(Cursors[] cursorsToReplace)
         {
             foreach(var cursor in cursorsToReplace)
             {
@@ -227,6 +275,32 @@ namespace WinCursorChanger
                 {
                     IntPtr newCursorFilePtr = LoadCursorFromFile(this._newCursorFilePath);
                     SetSystemCursor(newCursorFilePtr, (uint)cursor.GetHashCode());
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"There was an error updating cursor ({cursor}). Error: {ex}");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Used to reset system cursors to default. 
+        /// Uses interops to update the cursor immediately. This allows the cursor
+        /// changes to be seen without restarting or logging out of the system first. Overloaded method.
+        /// </summary>
+        /// <param name="cursorsToReplace">List of cursors to replace.</param>
+        /// <returns>Boolean: True if successful, false otherwise.</returns>
+        private bool _updateSystemCursorsWithoutRestart(List<DefaultCursorEntry> cursorsToReplace)
+        {
+            foreach (var cursor in cursorsToReplace)
+            {
+                try
+                {
+                    IntPtr newCursorFilePtr = LoadCursorFromFile(cursor.Path);
+                    SetSystemCursor(newCursorFilePtr, (uint)cursor.ID);
                 }
                 catch (Exception ex)
                 {
@@ -263,12 +337,19 @@ namespace WinCursorChanger
             // Full path to defaultCursors.json
             string fullFilePath = Path.Combine(fullDirectoryPath, "defaultCursors.json");
 
-            if (File.Exists(fullFilePath))
+
+            // If the file exits, return the file path,
+            // otherwise, try to save the default cursors.
+
+            if (File.Exists(fullFilePath) && !this._forceReset)
             {
                 return fullFilePath;
             }
 
-            Directory.CreateDirectory(fullDirectoryPath);
+            if (!Directory.Exists(fullDirectoryPath))
+            {
+                Directory.CreateDirectory(fullDirectoryPath);
+            }
 
             return _saveDefaultCursors(fullFilePath) ? fullFilePath : null;
 
@@ -296,7 +377,7 @@ namespace WinCursorChanger
                         if (!(name == "DWORD" || String.IsNullOrEmpty(name) || this._keysToIgnore.Contains(name)))
                         {
                             var path = cursorRegistryKey.GetValue(name);
-                            var entry = new DefaultCursorEntry(name, path.ToString());
+                            var entry = new DefaultCursorEntry(this._getID(name), name, path.ToString());
                             cursorEntryList.defaultCursorEntries.Add(entry);
                         }
                     }
@@ -324,6 +405,27 @@ namespace WinCursorChanger
             }
 
             return true;
+
+        }
+
+        /// <summary>
+        /// Get the hash code of a cursor from Cursors.
+        /// </summary>
+        /// <param name="name">Name of cursor.</param>
+        /// <returns>Boolean: true if successful, false otherwise.</returns>
+        private int _getID(string name)
+        {
+            var cursorsList = Enum.GetValues(typeof(Cursors));
+
+            foreach (Cursors cursor in cursorsList)
+            {
+                if (cursor.ToString().Equals(name))
+                {
+                    return cursor.GetHashCode();
+                }
+            }
+
+            return -1;
 
         }
     }
