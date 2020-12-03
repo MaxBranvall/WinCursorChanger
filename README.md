@@ -1,5 +1,5 @@
 # WinCursorChanger
-Easy to use .NET library for replacing cursors on Windows with any .cur file as well as restore the users default cursors.
+Easy to use .NET 5 library for replacing cursors on Windows with any .cur file as well as restore the users default cursors.
 
 ## About the Project
 - I wrote this library to use alongside my [GTACursor](https://github.com/MaxBranvall/GTACursor) application. *Talk about over-engineering*.
