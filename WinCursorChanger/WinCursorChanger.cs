@@ -30,6 +30,7 @@ namespace WinCursorChanger
 
         /// <summary>
         /// Path to the users CursorDirectory.
+        /// Attention: Not used anymore. Will probably remove in the future.
         /// </summary>
         private string _rootCursorDirectoryPath { get; init; }
 
@@ -69,8 +70,6 @@ namespace WinCursorChanger
             UpArrow = 32516,
             Wait = 32514
         }
-
-        private Dictionary<Cursors, string> cursorDict = new Dictionary<Cursors, string>();
 
         private String[] _keysToIgnore = { "NWPen", "Person", "Pin", "Scheme Source", "GestureVisualization", "CursorBaseSize", "ContactVisualization" };
 
@@ -190,8 +189,26 @@ namespace WinCursorChanger
         /// <returns>Boolean: true if successful, false otherwise</returns>
         private bool _setCursors(Cursors[] cursorsToReplace)
         {
-            bool registry = this._updateRegistry(cursorsToReplace);
-            bool system = this._updateSystemCursorsWithoutRestart(cursorsToReplace);
+
+            bool registry = false;
+            bool system = false;
+
+            try
+            {
+
+                // If our new cursor was never specified, do not proceed.
+                if (String.IsNullOrEmpty(this._newCursorFilePath))
+                {
+                    throw new ArgumentNullException("_newCursorFilePath", "Error: New cursor was not specified!");
+                }
+
+                registry = this._updateRegistry(cursorsToReplace);
+                system = this._updateSystemCursorsWithoutRestart(cursorsToReplace);
+            } catch (ArgumentNullException ex)
+            {
+                Console.WriteLine(ex);
+                return false;
+            }
 
             return (registry && system) ? true : false;
         }
@@ -236,7 +253,7 @@ namespace WinCursorChanger
             return true;
         }
         /// <summary>
-        /// Used to reset default cursors. Overloaded method.
+        /// Used to reset default cursors.
         /// </summary>
         /// <param name="cursorsToReplace">List of cursors to replace.</param>
         /// <returns>Bool: True - Updated Successfully, False - Otherwise</returns>
@@ -289,7 +306,7 @@ namespace WinCursorChanger
         /// <summary>
         /// Used to reset system cursors to default. 
         /// Uses interops to update the cursor immediately. This allows the cursor
-        /// changes to be seen without restarting or logging out of the system first. Overloaded method.
+        /// changes to be seen without restarting or logging out of the system first.
         /// </summary>
         /// <param name="cursorsToReplace">List of cursors to replace.</param>
         /// <returns>Boolean: True if successful, false otherwise.</returns>
