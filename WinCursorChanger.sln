@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.30711.63
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinCursorChanger", "WinCursorChanger\WinCursorChanger.csproj", "{E42EB007-4C30-4B25-9DFA-CEE3894F7C80}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinCursorChangerConsole", "WinCursorChangerConsole\WinCursorChangerConsole.csproj", "{860E1A69-89C9-4267-97B0-3ECF6A9DFC50}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinCursorChangerConsole", "WinCursorChangerConsole\WinCursorChangerConsole.csproj", "{860E1A69-89C9-4267-97B0-3ECF6A9DFC50}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CursorChangerTest", "CursorChangerTest\CursorChangerTest.csproj", "{00AD02A7-B2C3-4DA1-9ABA-75EC736E2016}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{860E1A69-89C9-4267-97B0-3ECF6A9DFC50}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{860E1A69-89C9-4267-97B0-3ECF6A9DFC50}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{860E1A69-89C9-4267-97B0-3ECF6A9DFC50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00AD02A7-B2C3-4DA1-9ABA-75EC736E2016}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00AD02A7-B2C3-4DA1-9ABA-75EC736E2016}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00AD02A7-B2C3-4DA1-9ABA-75EC736E2016}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00AD02A7-B2C3-4DA1-9ABA-75EC736E2016}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
